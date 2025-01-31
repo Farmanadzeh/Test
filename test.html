@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { display: flex; gap: 20px; }
+        .quiz-box { width: 400px; }
+        .question { font-size: 18px; margin-bottom: 10px; }
+        .options label { display: block; padding: 5px; cursor: pointer; }
+        .controls { margin-top: 10px; }
+        .right-panel { width: 200px; border-left: 1px solid #ccc; padding-left: 10px; }
+        .answer-list div { cursor: pointer; padding: 5px; }
+        .answer-list div:hover { background-color: #f0f0f0; }
+        button { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-box">
+            <div id="question" class="question"></div>
+            <div id="options" class="options"></div>
+            <div class="controls">
+                <button id="prev" onclick="prevQuestion()" disabled>Geri</button>
+                <button id="next" onclick="nextQuestion()">İrəli</button>
+                <button id="result" onclick="showResult()" style="display:none;">Nəticə</button>
+                <button id="restart" onclick="restartQuiz()" style="display:none;">Yenidən Başla</button>
+            </div>
+        </div>
+        <div class="right-panel">
+            <h3>Cavablar</h3>
+            <div id="answer-list" class="answer-list"></div>
+        </div>
+    </div>
+    <script>
+        let questions = [
+            { q: "Mərkəzdənqaçma kompressorlarda bir pillədə qazın sıxılma həddi nə qədər götürülür?  ", correct: "0,4Mpa", options: ["0,4Mpa","0.2Mpa","0,6Mpa","1,0Mpa","0,8Mpa"] },
+            { q: "Avtomatlaşdırılmış qaz mühərrikli kompressorların  işə salınması, saxlanması   hansı səbəbdən ardıcılıqla aparılmalıdır?", correct: "Qəza baş verməməsi üçün", options: ["Sorma klapanların zədələnməməsi üçün" , "İşi daha çevik yerinə yetirmək üçün" , "Qəza baş verməməsi üçün" , "Dirsəkli vala gücun az düşməməsi üçün" , "Armaturları zədələməmək üçün"] },
+            { q: "10 QK kompressorlarda mühərrikin güc silindrləri hansı soyutma üsulu ilə soyudulur?", correct: "Hava və su  soyutma", options: ["Azotla soyutma","Yalnız hava ilə soyutma","Hava və su  soyutma","Butan ilə soyutma","Yalnız su ilə soyutma"] },
+            { q: "Siyirtmələrlə müqayisədə ventillərin konstruksiyaları mürəkkəb olduğundan onları hansı şərti diametrə qədər hazırlayırlar?", correct: "300mm", options: ["100mm","300mm","200mm","250mm","150mm"] },
+            { q: "Mayeli manometrlərin üstünlüyü nədədir?", correct: "Daha dəqiq göstərməsi", options: ["Həcmi böyük olması","Asan dəyişdirmə imkanın olması","Daha aydın göstərməsi","Daha dəqiq göstərməsi","Yüksət temperatura dözümlüyü"] },
+            { q: "Azot xəttinin əhəmiyyəti və işçi vəziyyəti necə olmalıdır?", correct: "Sistemin  üfürülməsi üçün nəzərdə tututlur və təhlükəsizlik nöqteyi nəzərdən  daim təzyiq altında olmalı ", options: ["Heç bir əhəmiyyəti yoxdur","Kompressor  işləyən zaman istifadə olunur","Xətləri sınaqdan keçirmək üçün","Yanğın zamanı istifade edilir","Sistemin  üfürülməsi üçün nəzərdə tututlur və təhlükəsizlik nöqteyi nəzərdən  daim təzyiq altında olmalı "] },
+
+        ];
+        
+        questions.forEach(q => q.options = shuffle(q.options));
+        let currentQuestionIndex = 0;
+        let selectedAnswers = Array(questions.length).fill(null);
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function loadQuestion() {
+            let q = questions[currentQuestionIndex];
+            document.getElementById("question").textContent = q.q;
+            document.getElementById("options").innerHTML = q.options.map((opt, i) => 
+                `<label><input type="radio" name="answer" value="${opt}" ${selectedAnswers[currentQuestionIndex] === opt ? 'checked' : ''} onchange="selectAnswer('${opt}')"> ${opt}</label>`
+            ).join('');
+            document.getElementById("prev").disabled = currentQuestionIndex === 0;
+            document.getElementById("next").style.display = currentQuestionIndex < questions.length - 1 ? "inline-block" : "none";
+            document.getElementById("result").style.display = currentQuestionIndex === questions.length - 1 ? "inline-block" : "none";
+            updateAnswerList();
+        }
+
+        function selectAnswer(answer) {
+            selectedAnswers[currentQuestionIndex] = answer;
+            updateAnswerList();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function updateAnswerList() {
+            document.getElementById("answer-list").innerHTML = selectedAnswers.map((ans, i) => 
+                `<div onclick="goToQuestion(${i})">${i + 1}. ${ans || "-"}</div>`
+            ).join('');
+        }
+
+        function goToQuestion(index) {
+            currentQuestionIndex = index;
+            loadQuestion();
+        }
+
+        function showResult() {
+            let correctCount = selectedAnswers.filter((ans, i) => ans === questions[i].correct).length;
+            alert(`Doğru Cavablar: ${correctCount} / ${questions.length}`);
+            document.getElementById("options").innerHTML = selectedAnswers.map((ans, i) => 
+                `<p>${questions[i].q}: ${ans} ${ans === questions[i].correct ? "✅" : "❌ (Düzgün: " + questions[i].correct + ")"}</p>`
+            ).join('');
+            document.getElementById("prev").style.display = "none";
+            document.getElementById("next").style.display = "none";
+            document.getElementById("result").style.display = "none";
+            document.getElementById("restart").style.display = "inline-block";
+        }
+
+        function restartQuiz() {
+            selectedAnswers.fill(null);
+            currentQuestionIndex = 0;
+            questions.forEach(q => q.options = shuffle(q.options));
+            loadQuestion();
+            document.getElementById("restart").style.display = "none";
+            document.getElementById("prev").style.display = "inline-block";
+            document.getElementById("next").style.display = "inline-block";
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
